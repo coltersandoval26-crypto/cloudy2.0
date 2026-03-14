@@ -60,32 +60,32 @@ const weatherCodes = {
 };
 
 const weatherIcons = {
-  0: "☀️",
-  1: "🌤️",
-  2: "⛅",
-  3: "☁️",
-  45: "🌫️",
-  48: "🌫️",
-  51: "🌦️",
-  53: "🌦️",
-  55: "🌧️",
-  56: "🌧️",
-  57: "🌧️",
-  61: "🌧️",
-  63: "🌧️",
-  65: "⛈️",
-  66: "🌧️",
-  67: "🌧️",
-  71: "🌨️",
-  73: "🌨️",
-  75: "❄️",
-  77: "🌨️",
-  80: "🌧️",
-  81: "🌧️",
-  82: "⛈️",
-  95: "⛈️",
-  96: "⛈️",
-  99: "⛈️",
+  0: "icons/weather-code-0.svg",
+  1: "icons/weather-code-1.svg",
+  2: "icons/weather-code-2.svg",
+  3: "icons/weather-code-3.svg",
+  45: "icons/weather-code-45.svg",
+  48: "icons/weather-code-48.svg",
+  51: "icons/weather-code-51.svg",
+  53: "icons/weather-code-53.svg",
+  55: "icons/weather-code-55.svg",
+  56: "icons/weather-code-56.svg",
+  57: "icons/weather-code-57.svg",
+  61: "icons/weather-code-61.svg",
+  63: "icons/weather-code-63.svg",
+  65: "icons/weather-code-65.svg",
+  66: "icons/weather-code-66.svg",
+  67: "icons/weather-code-67.svg",
+  71: "icons/weather-code-71.svg",
+  73: "icons/weather-code-73.svg",
+  75: "icons/weather-code-75.svg",
+  77: "icons/weather-code-77.svg",
+  80: "icons/weather-code-80.svg",
+  81: "icons/weather-code-81.svg",
+  82: "icons/weather-code-82.svg",
+  95: "icons/weather-code-95.svg",
+  96: "icons/weather-code-96.svg",
+  99: "icons/weather-code-99.svg",
 };
 
 const debounce = (fn, delay = 220) => {
@@ -167,7 +167,7 @@ const renderHourlyCards = (data) => {
 
     card.innerHTML = `
       <div class="time">${label}</div>
-      <div class="icon">${pops[index] > 50 ? "🌧️" : "🌤️"}</div>
+      <div class="icon"><img class="hourly-icon-img" src="${pops[index] > 50 ? "icons/weather-code-61.svg" : "icons/weather-code-1.svg"}" alt="hourly weather icon" /></div>
       <div class="temp">${formatTemp(temps[index] ?? 0)}</div>
       <div class="time">Rain ${Math.round(pops[index] ?? 0)}%</div>
       <div class="time">Depth ${formatRain(precip[index] ?? 0)}</div>
@@ -200,7 +200,7 @@ const renderDaily = (data) => {
     card.innerHTML = `
       <div class="day-head">
         <h4>${label}</h4>
-        <span class="day-icon">${weatherIcons[codes[index]] || "🌡️"}</span>
+        <span class="day-icon"><img class="day-icon-img" src="${weatherIcons[codes[index]] || "icons/weather-default.svg"}" alt="daily weather icon" /></span>
       </div>
       <p>High: ${formatTemp(highs[index])}</p>
       <p>Low: ${formatTemp(lows[index])}</p>
@@ -300,7 +300,7 @@ async function loadLocation(lat, lon, name) {
   try {
     cityEl.textContent = name;
     conditionEl.textContent = "";
-    weatherIconEl.textContent = "⏳";
+    weatherIconEl.innerHTML = `<img class="current-icon-img" src="icons/weather-default.svg" alt="current weather icon" />`;
     tempEl.textContent = "Loading...";
     detailsEl.textContent = "";
     setStatus("Updating forecast...");
@@ -312,7 +312,7 @@ async function loadLocation(lat, lon, name) {
 
     tempEl.textContent = formatTemp(current.temperature_2m ?? data.current_weather.temperature);
     conditionEl.textContent = weatherCodes[current.weather_code] || "Current conditions";
-    weatherIconEl.textContent = weatherIcons[current.weather_code] || "🌡️";
+    weatherIconEl.innerHTML = `<img class="current-icon-img" src="${weatherIcons[current.weather_code] || "icons/weather-default.svg"}" alt="${weatherCodes[current.weather_code] || "current weather"}" />`;
     detailsEl.textContent = `Wind ${formatSpeed(
       current.wind_speed_10m ?? data.current_weather.windspeed
     )} · Updated ${new Date(
