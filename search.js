@@ -1,14 +1,17 @@
-export async function searchCity(query){
+export async function searchCity(query) {
+  if (query.length < 2) return [];
 
-if(query.length < 2) return [];
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+    query
+  )}&count=10&language=en&format=json`;
 
-const url =
-`https://geocoding-api.open-meteo.com/v1/search?name=${query}`;
+  const res = await fetch(url);
 
-const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Search failed with ${res.status}`);
+  }
 
-const data = await res.json();
+  const data = await res.json();
 
-return data.results || [];
-
+  return data.results || [];
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    <title>Cloudy • Weather</title>
+    <title>Cloudy • Precision Weather</title>
 
     <link rel="stylesheet" href="style.css" />
 
@@ -14,17 +14,19 @@
     />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body>
     <header>
-      <h1 class="logo">Cloudy</h1>
-      <p class="tagline">Fast, clean weather at a glance.</p>
+      <div class="brand-wrap">
+        <h1 class="logo">Cloudy</h1>
+        <p class="tagline">Precision forecasts with beautiful, glanceable detail.</p>
+      </div>
 
       <div class="search-wrap">
-        <input id="search" class="search-input" placeholder="Search city" />
+        <input id="search" class="search-input" placeholder="Search city, region, or airport" />
+        <button id="locate" class="ghost-btn" type="button">📍 Use my location</button>
         <div id="suggestions" class="suggestions"></div>
       </div>
 
@@ -32,11 +34,54 @@
     </header>
 
     <main>
+      <section class="landing">
+        <div>
+          <p class="eyebrow">Live forecast intelligence</p>
+          <h2>Weather clarity that feels premium at global scale.</h2>
+          <p class="landing-copy">
+            Hyper-clean UI, radar context, and fast decisions with flexible units for teams and travelers worldwide.
+          </p>
+          <div class="landing-pills">
+            <span>⚡ Fast search</span>
+            <span>🛰️ Live radar</span>
+            <span>🎯 Precise geolocation</span>
+          </div>
+        </div>
+
+        <div class="unit-panel">
+          <h3>View preferences</h3>
+          <label>
+            Temperature
+            <select id="unit-temp">
+              <option value="c">Celsius (°C)</option>
+              <option value="f">Fahrenheit (°F)</option>
+            </select>
+          </label>
+          <label>
+            Wind speed
+            <select id="unit-speed">
+              <option value="km">Kilometers (km/h)</option>
+              <option value="mi">Miles (mph)</option>
+            </select>
+          </label>
+          <label>
+            Rain depth
+            <select id="unit-rain">
+              <option value="cm">Centimeters (cm)</option>
+              <option value="in">Inches (in)</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
       <section id="current" class="hero">
         <div>
           <h2 id="city"></h2>
           <div id="condition" class="condition"></div>
-          <div id="temp"></div>
+          <div class="temp-row">
+            <div id="weatherIcon" class="weather-icon" aria-hidden="true"></div>
+            <div id="temp"></div>
+          </div>
           <div id="details"></div>
         </div>
         <div class="metrics-grid" id="metrics"></div>

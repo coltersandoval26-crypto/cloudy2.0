@@ -1,7 +1,8 @@
 let hourlyChart;
 
-export function drawHourlyChart(data) {
+export function drawHourlyChart(data, preferences) {
   const ctx = document.getElementById("hourlyChart");
+  const toTemp = preferences.temp === "f" ? (v) => v * 1.8 + 32 : (v) => v;
 
   if (hourlyChart) {
     hourlyChart.destroy();
@@ -15,8 +16,8 @@ export function drawHourlyChart(data) {
       ),
       datasets: [
         {
-          label: "Temperature (°C)",
-          data: data.hourly.temperature_2m.slice(0, 24),
+          label: `Temperature (°${preferences.temp === "f" ? "F" : "C"})`,
+          data: data.hourly.temperature_2m.slice(0, 24).map((v) => Math.round(toTemp(v))),
           borderColor: "#4cc9f0",
           backgroundColor: "rgba(76, 201, 240, 0.2)",
           fill: true,
