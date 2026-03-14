@@ -3,11 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-    <title>Cloudy • Precision Weather</title>
+    <title>Cloudy • Elite Forecast Experience</title>
 
     <link rel="stylesheet" href="style.css" />
-
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -18,38 +16,51 @@
   </head>
 
   <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
     <header>
       <div class="brand-wrap">
-        <h1 class="logo">Cloudy</h1>
-        <p class="tagline">Precision forecasts with beautiful, glanceable detail.</p>
+        <p class="eyebrow">Cloudy Next</p>
+        <h1 class="logo">Elite Weather Intelligence</h1>
+        <p class="tagline">
+          Stunning visuals, precise locations, and instant unit control built for global scale.
+        </p>
       </div>
 
       <div class="search-wrap">
-        <input id="search" class="search-input" placeholder="Search city, region, or airport" />
-        <button id="locate" class="ghost-btn" type="button">📍 Use my location</button>
-        <div id="suggestions" class="suggestions"></div>
+        <input
+          id="search"
+          class="search-input"
+          placeholder="Search city, district, airport, or landmark"
+          autocomplete="off"
+          aria-label="Search for a location"
+        />
+        <button id="locate" class="ghost-btn" type="button">📍 Use precise location</button>
+        <div id="suggestions" class="suggestions" role="listbox"></div>
       </div>
 
+      <div id="status" class="status" aria-live="polite"></div>
       <div id="recent" class="recent-list"></div>
     </header>
 
     <main>
       <section class="landing">
         <div>
-          <p class="eyebrow">Live forecast intelligence</p>
-          <h2>Weather clarity that feels premium at global scale.</h2>
+          <h2>Designed to outperform any weather app experience.</h2>
           <p class="landing-copy">
-            Hyper-clean UI, radar context, and fast decisions with flexible units for teams and travelers worldwide.
+            Premium readability, high-accuracy geolocation, and dynamic forecast signals for confident decisions.
           </p>
           <div class="landing-pills">
-            <span>⚡ Fast search</span>
-            <span>🛰️ Live radar</span>
-            <span>🎯 Precise geolocation</span>
+            <span>⚡ Instant search</span>
+            <span>🎯 High-accuracy geolocation</span>
+            <span>🌦️ Rich weather icons</span>
+            <span>📈 Smart hourly trend chart</span>
           </div>
         </div>
 
         <div class="unit-panel">
-          <h3>View preferences</h3>
+          <h3>View Preferences</h3>
           <label>
             Temperature
             <select id="unit-temp">
@@ -58,14 +69,14 @@
             </select>
           </label>
           <label>
-            Wind speed
+            Wind
             <select id="unit-speed">
               <option value="km">Kilometers (km/h)</option>
               <option value="mi">Miles (mph)</option>
             </select>
           </label>
           <label>
-            Rain depth
+            Rainfall
             <select id="unit-rain">
               <option value="cm">Centimeters (cm)</option>
               <option value="in">Inches (in)</option>
@@ -88,17 +99,22 @@
       </section>
 
       <section>
-        <h3>Hourly Forecast</h3>
+        <h3>Next Hours At A Glance</h3>
+        <div id="hourlyCards" class="hourly-cards"></div>
+      </section>
+
+      <section>
+        <h3>Hourly Forecast Trend</h3>
         <canvas id="hourlyChart"></canvas>
       </section>
 
       <section>
-        <h3>7 Day Forecast</h3>
+        <h3>7 Day Outlook</h3>
         <div id="daily" class="daily-grid"></div>
       </section>
 
       <section>
-        <h3>Radar</h3>
+        <h3>Live Radar</h3>
         <div id="radar"></div>
       </section>
     </main>

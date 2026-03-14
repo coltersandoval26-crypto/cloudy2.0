@@ -7,12 +7,14 @@ import { saveRecent, getRecent } from "./storage.js";
 const input = document.getElementById("search");
 const locateBtn = document.getElementById("locate");
 const suggestions = document.getElementById("suggestions");
+const statusEl = document.getElementById("status");
 const cityEl = document.getElementById("city");
 const conditionEl = document.getElementById("condition");
 const weatherIconEl = document.getElementById("weatherIcon");
 const tempEl = document.getElementById("temp");
 const detailsEl = document.getElementById("details");
 const metricsEl = document.getElementById("metrics");
+const hourlyCardsEl = document.getElementById("hourlyCards");
 const dailyEl = document.getElementById("daily");
 const recentEl = document.getElementById("recent");
 const tempUnitEl = document.getElementById("unit-temp");
@@ -38,14 +40,23 @@ const weatherCodes = {
   51: "Light drizzle",
   53: "Moderate drizzle",
   55: "Dense drizzle",
+  56: "Freezing drizzle",
+  57: "Dense freezing drizzle",
   61: "Slight rain",
   63: "Moderate rain",
   65: "Heavy rain",
+  66: "Freezing rain",
+  67: "Heavy freezing rain",
   71: "Slight snow",
   73: "Moderate snow",
   75: "Heavy snow",
+  77: "Snow grains",
   80: "Rain showers",
+  81: "Heavy showers",
+  82: "Violent showers",
   95: "Thunderstorm",
+  96: "Thunderstorm with hail",
+  99: "Severe hailstorm",
 };
 
 const weatherIcons = {
@@ -58,17 +69,26 @@ const weatherIcons = {
   51: "🌦️",
   53: "🌦️",
   55: "🌧️",
+  56: "🌧️",
+  57: "🌧️",
   61: "🌧️",
   63: "🌧️",
   65: "⛈️",
+  66: "🌧️",
+  67: "🌧️",
   71: "🌨️",
   73: "🌨️",
   75: "❄️",
+  77: "🌨️",
   80: "🌧️",
+  81: "🌧️",
+  82: "⛈️",
   95: "⛈️",
+  96: "⛈️",
+  99: "⛈️",
 };
 
-const debounce = (fn, delay = 250) => {
+const debounce = (fn, delay = 220) => {
   let timer;
   return (...args) => {
     clearTimeout(timer);
@@ -82,19 +102,28 @@ const mmToCm = (mm) => mm / 10;
 const mmToIn = (mm) => mm / 25.4;
 
 const formatTemp = (value) => {
-  const v = preferences.temp === "f" ? cToF(value) : value;
+  const numeric = Number(value ?? 0);
+  const v = preferences.temp === "f" ? cToF(numeric) : numeric;
   return `${Math.round(v)}°${preferences.temp === "f" ? "F" : "C"}`;
 };
 
 const formatSpeed = (value) => {
-  const v = preferences.speed === "mi" ? kmhToMph(value) : value;
+  const numeric = Number(value ?? 0);
+  const v = preferences.speed === "mi" ? kmhToMph(numeric) : numeric;
   return `${Math.round(v)} ${preferences.speed === "mi" ? "mph" : "km/h"}`;
 };
 
 const formatRain = (mm) => {
-  const v = preferences.rain === "in" ? mmToIn(mm) : mmToCm(mm);
+  const numeric = Number(mm ?? 0);
+  const v = preferences.rain === "in" ? mmToIn(numeric) : mmToCm(numeric);
   return `${v.toFixed(2)} ${preferences.rain === "in" ? "in" : "cm"}`;
 };
+
+const setStatus = (message = "") => {
+  statusEl.textContent = message;
+};
+
+const getLocationName = (item) => [item.name, item.admin1, item.country].filter(Boolean).join(", ");
 
 const renderSuggestions = (results) => {
   suggestions.innerHTML = "";
@@ -104,10 +133,10 @@ const renderSuggestions = (results) => {
     button.type = "button";
     button.className = "suggestion";
 
-    const locationName = [result.name, result.admin1, result.country].filter(Boolean).join(", ");
-    const precision = `(${Number(result.latitude).toFixed(3)}, ${Number(result.longitude).toFixed(3)})`;
+    const locationName = getLocationName(result);
+    const precision = `${Number(result.latitude).toFixed(4)}, ${Number(result.longitude).toFixed(4)}`;
 
-    button.innerHTML = `<strong>${locationName}</strong><br /><small>${precision}</small>`;
+    button.innerHTML = `<strong>${locationName}</strong><br /><small>Precision: ${precision}</small>`;
 
     button.addEventListener("click", () => {
       loadLocation(result.latitude, result.longitude, locationName);
@@ -119,11 +148,41 @@ const renderSuggestions = (results) => {
   });
 };
 
+const renderHourlyCards = (data) => {
+  const times = data.hourly.time || [];
+  const temps = data.hourly.temperature_2m || [];
+  const pops = data.hourly.precipitation_probability || [];
+  const precip = data.hourly.precipitation || [];
+
+  hourlyCardsEl.innerHTML = "";
+
+  times.slice(0, 8).forEach((time, index) => {
+    const card = document.createElement("article");
+    card.className = "hourly-card";
+
+    const label = new Date(time).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    card.innerHTML = `
+      <div class="time">${label}</div>
+      <div class="icon">${pops[index] > 50 ? "🌧️" : "🌤️"}</div>
+      <div class="temp">${formatTemp(temps[index] ?? 0)}</div>
+      <div class="time">Rain ${Math.round(pops[index] ?? 0)}%</div>
+      <div class="time">Depth ${formatRain(precip[index] ?? 0)}</div>
+    `;
+
+    hourlyCardsEl.appendChild(card);
+  });
+};
+
 const renderDaily = (data) => {
   const dates = data.daily.time || [];
   const highs = data.daily.temperature_2m_max || [];
   const lows = data.daily.temperature_2m_min || [];
   const rainChance = data.daily.precipitation_probability_max || [];
+  const precipitation = data.daily.precipitation_sum || [];
   const codes = data.daily.weather_code || [];
 
   dailyEl.innerHTML = "";
@@ -143,9 +202,10 @@ const renderDaily = (data) => {
         <h4>${label}</h4>
         <span class="day-icon">${weatherIcons[codes[index]] || "🌡️"}</span>
       </div>
-      <p>High: ${formatTemp(highs[index] ?? 0)}</p>
-      <p>Low: ${formatTemp(lows[index] ?? 0)}</p>
-      <p>Rain: ${Math.round(rainChance[index] ?? 0)}%</p>
+      <p>High: ${formatTemp(highs[index])}</p>
+      <p>Low: ${formatTemp(lows[index])}</p>
+      <p>Rain chance: ${Math.round(rainChance[index] ?? 0)}%</p>
+      <p>Rain depth: ${formatRain(precipitation[index] ?? 0)}</p>
     `;
 
     dailyEl.appendChild(card);
@@ -160,10 +220,11 @@ const renderMetrics = (data) => {
   const rainToday = daily.precipitation_sum?.[0] ?? 0;
 
   const metrics = [
-    ["Feels like", formatTemp(current.apparent_temperature ?? 0)],
+    ["Feels like", formatTemp(current.apparent_temperature)],
     ["Humidity", `${Math.round(current.relative_humidity_2m ?? 0)}%`],
     ["Pressure", `${Math.round(current.surface_pressure ?? 0)} hPa`],
-    ["Wind", formatSpeed(current.wind_speed_10m ?? 0)],
+    ["Wind", formatSpeed(current.wind_speed_10m)],
+    ["Wind Dir", `${Math.round(current.wind_direction_10m ?? 0)}°`],
     ["Rain today", formatRain(rainToday)],
     ["Sunrise", sunrise ? new Date(sunrise).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-"],
     ["Sunset", sunset ? new Date(sunset).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-"],
@@ -187,12 +248,13 @@ const renderRecent = async () => {
     chip.className = "recent-chip";
     chip.textContent = cityName;
     chip.addEventListener("click", async () => {
-      const matches = await searchCity(cityName);
-      if (matches[0]) {
-        const locationName = [matches[0].name, matches[0].admin1, matches[0].country]
-          .filter(Boolean)
-          .join(", ");
-        loadLocation(matches[0].latitude, matches[0].longitude, locationName);
+      try {
+        const matches = await searchCity(cityName);
+        if (matches[0]) {
+          loadLocation(matches[0].latitude, matches[0].longitude, getLocationName(matches[0]));
+        }
+      } catch {
+        setStatus("Could not load recent location right now.");
       }
     });
     recentEl.appendChild(chip);
@@ -201,24 +263,37 @@ const renderRecent = async () => {
 
 const runSearch = debounce(async () => {
   const query = input.value.trim();
-  latestResults = await searchCity(query);
-  renderSuggestions(latestResults);
+  if (!query) {
+    suggestions.innerHTML = "";
+    setStatus("");
+    return;
+  }
+
+  try {
+    latestResults = await searchCity(query);
+    renderSuggestions(latestResults);
+    setStatus(latestResults.length ? "" : "No locations found.");
+  } catch {
+    setStatus("Location search is unavailable right now. Please try again.");
+  }
 });
 
 const rerenderCurrent = () => {
   if (!currentContext) return;
-  drawHourlyChart(currentContext.data, preferences);
-  renderDaily(currentContext.data);
-  renderMetrics(currentContext.data);
-
-  const current = currentContext.data.current || {};
-  const temperature = current.temperature_2m ?? currentContext.data.current_weather?.temperature ?? 0;
-  const windSpeed = current.wind_speed_10m ?? currentContext.data.current_weather?.windspeed ?? 0;
+  const { data } = currentContext;
+  const current = data.current || {};
+  const temperature = current.temperature_2m ?? data.current_weather?.temperature;
+  const windSpeed = current.wind_speed_10m ?? data.current_weather?.windspeed;
 
   tempEl.textContent = formatTemp(temperature);
   detailsEl.textContent = `Wind ${formatSpeed(windSpeed)} · Updated ${new Date(
-    current.time ?? currentContext.data.current_weather?.time
+    current.time ?? data.current_weather?.time
   ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+
+  drawHourlyChart(data, preferences);
+  renderHourlyCards(data);
+  renderDaily(data);
+  renderMetrics(data);
 };
 
 async function loadLocation(lat, lon, name) {
@@ -228,6 +303,7 @@ async function loadLocation(lat, lon, name) {
     weatherIconEl.textContent = "⏳";
     tempEl.textContent = "Loading...";
     detailsEl.textContent = "";
+    setStatus("Updating forecast...");
 
     const data = await fetchWeather(lat, lon);
     const current = data.current || {};
@@ -244,15 +320,18 @@ async function loadLocation(lat, lon, name) {
     ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 
     drawHourlyChart(data, preferences);
+    renderHourlyCards(data);
     renderDaily(data);
     renderMetrics(data);
     createRadar(lat, lon);
 
     saveRecent(name);
     renderRecent();
-  } catch (error) {
+    setStatus("");
+  } catch {
     tempEl.textContent = "Couldn't load weather";
     detailsEl.textContent = "Please try another location.";
+    setStatus("Weather service unavailable. Please retry shortly.");
   }
 }
 
@@ -260,7 +339,7 @@ input.addEventListener("input", runSearch);
 input.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && latestResults[0]) {
     const city = latestResults[0];
-    const locationName = [city.name, city.admin1, city.country].filter(Boolean).join(", ");
+    const locationName = getLocationName(city);
     loadLocation(city.latitude, city.longitude, locationName);
     input.value = locationName;
     suggestions.innerHTML = "";
@@ -275,26 +354,27 @@ document.addEventListener("click", (event) => {
 
 locateBtn.addEventListener("click", () => {
   if (!navigator.geolocation) {
-    detailsEl.textContent = "Geolocation is not supported in this browser.";
+    setStatus("Geolocation is not supported in this browser.");
     return;
   }
 
   locateBtn.disabled = true;
   locateBtn.textContent = "Locating...";
+  setStatus("Requesting high-accuracy location...");
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const { latitude, longitude, accuracy } = position.coords;
-      await loadLocation(latitude, longitude, `My Location (${Math.round(accuracy)}m)`);
+      await loadLocation(latitude, longitude, `My Precise Location (~${Math.round(accuracy)}m)`);
       locateBtn.disabled = false;
-      locateBtn.textContent = "📍 Use my location";
+      locateBtn.textContent = "📍 Use precise location";
     },
     () => {
-      detailsEl.textContent = "Unable to access your location. Check permissions and try again.";
+      setStatus("Unable to access location. Check browser permissions and try again.");
       locateBtn.disabled = false;
-      locateBtn.textContent = "📍 Use my location";
+      locateBtn.textContent = "📍 Use precise location";
     },
-    { enableHighAccuracy: true, timeout: 10000 }
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 });
 
@@ -303,9 +383,11 @@ locateBtn.addEventListener("click", () => {
     preferences.temp = tempUnitEl.value;
     preferences.speed = speedUnitEl.value;
     preferences.rain = rainUnitEl.value;
+
     localStorage.setItem("pref-temp", preferences.temp);
     localStorage.setItem("pref-speed", preferences.speed);
     localStorage.setItem("pref-rain", preferences.rain);
+
     rerenderCurrent();
   });
 });
