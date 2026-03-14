@@ -3,58 +3,134 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-
-    <title>Weather</title>
+    <title>Cloudy • Elite Forecast Experience</title>
 
     <link rel="stylesheet" href="style.css" />
-
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+
     <header>
-      <h1 class="logo">Weather</h1>
-
-      <div class="search-wrap">
-        <input id="search" class="search-input" placeholder="Search city" />
-
-        <div id="suggestions" class="suggestions"></div>
+      <div class="brand-wrap">
+        <p class="eyebrow">Cloudy Next</p>
+        <h1 class="logo">Forecasts you can trust in seconds.</h1>
+        <p class="tagline">Precision location, clean data, and human-friendly weather context.</p>
       </div>
 
+      <div class="search-wrap">
+        <input
+          id="search"
+          class="search-input"
+          placeholder="Search city, district, airport, or landmark"
+          autocomplete="off"
+          aria-label="Search for a location"
+        />
+        <button id="locate" class="ghost-btn" type="button">📍 Use precise location</button>
+        <div id="suggestions" class="suggestions" role="listbox"></div>
+      </div>
+
+      <div id="status" class="status" aria-live="polite"></div>
       <div id="recent" class="recent-list"></div>
+      <div id="favorites" class="favorite-list"></div>
     </header>
 
     <main>
-      <section id="current">
-        <h2 id="city"></h2>
+      <section class="landing">
+        <div>
+          <h2>Built for “check quickly, decide confidently.”</h2>
+          <p class="landing-copy">Fast location search, precise geolocation, and unit controls that match how you think.</p>
+          <div class="landing-pills">
+            <span>⚡ Fast search</span>
+            <span>🎯 Precise geolocation</span>
+            <span>🧭 Keyboard-friendly suggestions</span>
+            <span>📈 Hourly + weekly context</span>
+            <span>🌫️ Air quality</span>
+            <span>🚨 Smart weather alerts</span>
+            <span>🔗 Shareable deep links</span>
+          </div>
+        </div>
 
-        <div id="temp"></div>
+        <div class="unit-panel">
+          <h3>View Preferences</h3>
+          <label>
+            Temperature
+            <select id="unit-temp">
+              <option value="c">Celsius (°C)</option>
+              <option value="f">Fahrenheit (°F)</option>
+            </select>
+          </label>
+          <label>
+            Wind
+            <select id="unit-speed">
+              <option value="km">Kilometers (km/h)</option>
+              <option value="mi">Miles (mph)</option>
+            </select>
+          </label>
+          <label>
+            Rainfall
+            <select id="unit-rain">
+              <option value="cm">Centimeters (cm)</option>
+              <option value="in">Inches (in)</option>
+            </select>
+          </label>
+        </div>
+      </section>
 
-        <div id="details"></div>
+      <section id="current" class="hero">
+        <div>
+          <h2 id="city"></h2>
+          <div id="condition" class="condition"></div>
+          <div class="temp-row">
+            <div id="weatherIcon" class="weather-icon" aria-hidden="true"></div>
+            <div id="temp"></div>
+          </div>
+          <div class="action-row">
+            <button id="saveFavorite" class="ghost-btn" type="button">⭐ Save favorite</button>
+            <button id="shareLocation" class="ghost-btn" type="button">🔗 Share</button>
+          </div>
+          <div id="details"></div>
+        </div>
+        <div class="metrics-grid" id="metrics"></div>
+      </section>
+
+      <section class="split-grid">
+        <article>
+          <h3>Air Quality</h3>
+          <div id="airQuality" class="air-quality"></div>
+        </article>
+        <article>
+          <h3>Smart Alerts</h3>
+          <div id="alerts" class="alerts"></div>
+        </article>
+        <article>
+          <h3>Sun Progress</h3>
+          <div id="sunProgress" class="sun-progress"></div>
+        </article>
       </section>
 
       <section>
-        <h3>Hourly Forecast</h3>
+        <h3>Next Hours At A Glance</h3>
+        <div id="hourlyCards" class="hourly-cards"></div>
+      </section>
 
+      <section>
+        <h3>Hourly Forecast Trend</h3>
         <canvas id="hourlyChart"></canvas>
       </section>
 
       <section>
-        <h3>7 Day Forecast</h3>
-
+        <h3>7 Day Outlook</h3>
         <div id="daily" class="daily-grid"></div>
       </section>
 
       <section>
-        <h3>Radar</h3>
-
+        <h3>Live Radar</h3>
         <div id="radar"></div>
       </section>
     </main>

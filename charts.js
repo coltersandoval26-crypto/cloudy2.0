@@ -1,7 +1,8 @@
 let hourlyChart;
 
-export function drawHourlyChart(data) {
+export function drawHourlyChart(data, preferences) {
   const ctx = document.getElementById("hourlyChart");
+  const toTemp = preferences.temp === "f" ? (v) => v * 1.8 + 32 : (v) => v;
 
   if (hourlyChart) {
     hourlyChart.destroy();
@@ -15,12 +16,22 @@ export function drawHourlyChart(data) {
       ),
       datasets: [
         {
-          label: "Temperature (°C)",
-          data: data.hourly.temperature_2m.slice(0, 24),
+          label: `Temperature (°${preferences.temp === "f" ? "F" : "C"})`,
+          data: data.hourly.temperature_2m.slice(0, 24).map((v) => Math.round(toTemp(v))),
           borderColor: "#4cc9f0",
           backgroundColor: "rgba(76, 201, 240, 0.2)",
           fill: true,
           tension: 0.3,
+          yAxisID: "y",
+        },
+        {
+          label: "Rain Chance (%)",
+          data: data.hourly.precipitation_probability.slice(0, 24),
+          borderColor: "#a78bfa",
+          backgroundColor: "rgba(167, 139, 250, 0.15)",
+          borderDash: [4, 4],
+          tension: 0.25,
+          yAxisID: "y1",
         },
       ],
     },
@@ -48,6 +59,17 @@ export function drawHourlyChart(data) {
           },
           grid: {
             color: "rgba(148, 163, 184, 0.15)",
+          },
+        },
+        y1: {
+          position: "right",
+          min: 0,
+          max: 100,
+          ticks: {
+            color: "#94a3b8",
+          },
+          grid: {
+            drawOnChartArea: false,
           },
         },
       },
