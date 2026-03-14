@@ -211,7 +211,7 @@ const renderHourlyCards = (data) => {
 
   hourlyCardsEl.innerHTML = "";
 
-  times.slice(0, 8).forEach((time, index) => {
+  times.slice(0, 12).forEach((time, index) => {
     const card = document.createElement("article");
     card.className = "hourly-card";
 
@@ -220,12 +220,15 @@ const renderHourlyCards = (data) => {
       minute: "2-digit",
     });
 
+    const rainPct = Math.round(pops[index] ?? 0);
+
     card.innerHTML = `
       <div class="time">${label}</div>
       <div class="icon"><img class="hourly-icon-img" src="${weatherIcons[codes[index]] || "icons/weather-default.svg"}" alt="hourly weather icon" /></div>
       <div class="temp">${formatTemp(temps[index] ?? 0)}</div>
-      <div class="time">Rain ${Math.round(pops[index] ?? 0)}%</div>
-      <div class="time">Depth ${formatRain(precip[index] ?? 0)}</div>
+      <div class="hourly-meta">Rain ${rainPct}%</div>
+      <div class="hourly-track"><div class="hourly-fill" style="width:${rainPct}%"></div></div>
+      <div class="hourly-meta">Depth ${formatRain(precip[index] ?? 0)}</div>
     `;
 
     hourlyCardsEl.appendChild(card);
