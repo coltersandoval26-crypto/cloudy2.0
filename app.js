@@ -1,5 +1,5 @@
 import { fetchWeather } from "./weather.js";
-import { searchCity } from "./search.js";
+import { searchCity, reverseGeocode } from "./search.js";
 import { drawHourlyChart } from "./charts.js";
 import { createRadar } from "./radar.js";
 import { saveRecent, getRecent } from "./storage.js";
@@ -28,6 +28,7 @@ const preferences = {
 };
 
 let latestResults = [];
+let highlightedSuggestion = -1;
 let currentContext = null;
 
 const weatherCodes = {
@@ -125,10 +126,28 @@ const setStatus = (message = "") => {
 
 const getLocationName = (item) => [item.name, item.admin1, item.country].filter(Boolean).join(", ");
 
+const selectSuggestion = (index) => {
+  if (!latestResults[index]) return;
+  const city = latestResults[index];
+  const locationName = getLocationName(city);
+  loadLocation(city.latitude, city.longitude, locationName);
+  input.value = locationName;
+  suggestions.innerHTML = "";
+  highlightedSuggestion = -1;
+};
+
+const highlightSuggestion = () => {
+  const items = suggestions.querySelectorAll(".suggestion");
+  items.forEach((item, index) => {
+    item.classList.toggle("is-active", index === highlightedSuggestion);
+  });
+};
+
 const renderSuggestions = (results) => {
   suggestions.innerHTML = "";
+  highlightedSuggestion = -1;
 
-  results.slice(0, 8).forEach((result) => {
+  results.slice(0, 8).forEach((result, index) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "suggestion";
@@ -139,9 +158,7 @@ const renderSuggestions = (results) => {
     button.innerHTML = `<strong>${locationName}</strong><br /><small>Precision: ${precision}</small>`;
 
     button.addEventListener("click", () => {
-      loadLocation(result.latitude, result.longitude, locationName);
-      input.value = locationName;
-      suggestions.innerHTML = "";
+      selectSuggestion(index);
     });
 
     suggestions.appendChild(button);
@@ -153,6 +170,7 @@ const renderHourlyCards = (data) => {
   const temps = data.hourly.temperature_2m || [];
   const pops = data.hourly.precipitation_probability || [];
   const precip = data.hourly.precipitation || [];
+  const codes = data.hourly.weather_code || [];
 
   hourlyCardsEl.innerHTML = "";
 
@@ -167,7 +185,7 @@ const renderHourlyCards = (data) => {
 
     card.innerHTML = `
       <div class="time">${label}</div>
-      <div class="icon"><img class="hourly-icon-img" src="${pops[index] > 50 ? "icons/weather-code-61.svg" : "icons/weather-code-1.svg"}" alt="hourly weather icon" /></div>
+      <div class="icon"><img class="hourly-icon-img" src="${weatherIcons[codes[index]] || "icons/weather-default.svg"}" alt="hourly weather icon" /></div>
       <div class="temp">${formatTemp(temps[index] ?? 0)}</div>
       <div class="time">Rain ${Math.round(pops[index] ?? 0)}%</div>
       <div class="time">Depth ${formatRain(precip[index] ?? 0)}</div>
@@ -224,7 +242,8 @@ const renderMetrics = (data) => {
     ["Humidity", `${Math.round(current.relative_humidity_2m ?? 0)}%`],
     ["Pressure", `${Math.round(current.surface_pressure ?? 0)} hPa`],
     ["Wind", formatSpeed(current.wind_speed_10m)],
-    ["Wind Dir", `${Math.round(current.wind_direction_10m ?? 0)}°`],
+    ["UV Index", `${Number(current.uv_index ?? 0).toFixed(1)}`],
+    ["Cloud Cover", `${Math.round(current.cloud_cover ?? 0)}%`],
     ["Rain today", formatRain(rainToday)],
     ["Sunrise", sunrise ? new Date(sunrise).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-"],
     ["Sunset", sunset ? new Date(sunset).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "-"],
@@ -265,6 +284,7 @@ const runSearch = debounce(async () => {
   const query = input.value.trim();
   if (!query) {
     suggestions.innerHTML = "";
+    latestResults = [];
     setStatus("");
     return;
   }
@@ -286,9 +306,12 @@ const rerenderCurrent = () => {
   const windSpeed = current.wind_speed_10m ?? data.current_weather?.windspeed;
 
   tempEl.textContent = formatTemp(temperature);
-  detailsEl.textContent = `Wind ${formatSpeed(windSpeed)} · Updated ${new Date(
-    current.time ?? data.current_weather?.time
-  ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  detailsEl.textContent = `${data.timezone_abbreviation || data.timezone || "Local"} · Wind ${formatSpeed(
+    windSpeed
+  )} · Updated ${new Date(current.time ?? data.current_weather?.time).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
 
   drawHourlyChart(data, preferences);
   renderHourlyCards(data);
@@ -313,11 +336,12 @@ async function loadLocation(lat, lon, name) {
     tempEl.textContent = formatTemp(current.temperature_2m ?? data.current_weather.temperature);
     conditionEl.textContent = weatherCodes[current.weather_code] || "Current conditions";
     weatherIconEl.innerHTML = `<img class="current-icon-img" src="${weatherIcons[current.weather_code] || "icons/weather-default.svg"}" alt="${weatherCodes[current.weather_code] || "current weather"}" />`;
-    detailsEl.textContent = `Wind ${formatSpeed(
+    detailsEl.textContent = `${data.timezone_abbreviation || data.timezone || "Local"} · Wind ${formatSpeed(
       current.wind_speed_10m ?? data.current_weather.windspeed
-    )} · Updated ${new Date(
-      current.time ?? data.current_weather.time
-    ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    )} · Updated ${new Date(current.time ?? data.current_weather.time).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
 
     drawHourlyChart(data, preferences);
     renderHourlyCards(data);
@@ -337,12 +361,31 @@ async function loadLocation(lat, lon, name) {
 
 input.addEventListener("input", runSearch);
 input.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && latestResults[0]) {
-    const city = latestResults[0];
-    const locationName = getLocationName(city);
-    loadLocation(city.latitude, city.longitude, locationName);
-    input.value = locationName;
+  if (!latestResults.length) return;
+
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    highlightedSuggestion = (highlightedSuggestion + 1) % latestResults.length;
+    highlightSuggestion();
+    return;
+  }
+
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    highlightedSuggestion = highlightedSuggestion <= 0 ? latestResults.length - 1 : highlightedSuggestion - 1;
+    highlightSuggestion();
+    return;
+  }
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+    selectSuggestion(highlightedSuggestion >= 0 ? highlightedSuggestion : 0);
+    return;
+  }
+
+  if (event.key === "Escape") {
     suggestions.innerHTML = "";
+    highlightedSuggestion = -1;
   }
 });
 
@@ -365,7 +408,15 @@ locateBtn.addEventListener("click", () => {
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const { latitude, longitude, accuracy } = position.coords;
-      await loadLocation(latitude, longitude, `My Precise Location (~${Math.round(accuracy)}m)`);
+      try {
+        const reverse = await reverseGeocode(latitude, longitude);
+        const locationLabel = reverse
+          ? `${getLocationName(reverse)} (~${Math.round(accuracy)}m)`
+          : `My Precise Location (~${Math.round(accuracy)}m)`;
+        await loadLocation(latitude, longitude, locationLabel);
+      } catch {
+        await loadLocation(latitude, longitude, `My Precise Location (~${Math.round(accuracy)}m)`);
+      }
       locateBtn.disabled = false;
       locateBtn.textContent = "📍 Use precise location";
     },

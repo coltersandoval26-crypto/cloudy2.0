@@ -12,6 +12,7 @@ body {
   color: #e2e8f0;
   font-family: Inter, system-ui, sans-serif;
   background: linear-gradient(180deg, #040713, #0a1222 30%, #090e1a);
+  letter-spacing: 0.1px;
   overflow-x: hidden;
 }
 
@@ -118,6 +119,7 @@ section {
 
 .status {
   min-height: 20px;
+  font-weight: 500;
   text-align: center;
   color: #7dd3fc;
   margin-top: 10px;
@@ -146,8 +148,9 @@ section {
   cursor: pointer;
 }
 
-.suggestion:hover {
-  background: rgba(148, 163, 184, 0.16);
+.suggestion:hover,
+.suggestion.is-active {
+  background: rgba(148, 163, 184, 0.22);
 }
 
 .suggestion small {
