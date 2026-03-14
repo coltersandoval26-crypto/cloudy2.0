@@ -6,10 +6,7 @@
     <title>Cloudy • Elite Forecast Experience</title>
 
     <link rel="stylesheet" href="style.css" />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,9 +20,7 @@
       <div class="brand-wrap">
         <p class="eyebrow">Cloudy Next</p>
         <h1 class="logo">Forecasts you can trust in seconds.</h1>
-        <p class="tagline">
-          Precision location, clean data, and human-friendly weather context.
-        </p>
+        <p class="tagline">Precision location, clean data, and human-friendly weather context.</p>
       </div>
 
       <div class="search-wrap">
@@ -42,20 +37,21 @@
 
       <div id="status" class="status" aria-live="polite"></div>
       <div id="recent" class="recent-list"></div>
+      <div id="favorites" class="favorite-list"></div>
     </header>
 
     <main>
       <section class="landing">
         <div>
           <h2>Built for “check quickly, decide confidently.”</h2>
-          <p class="landing-copy">
-            Fast location search, precise geolocation, and unit controls that match how you think.
-          </p>
+          <p class="landing-copy">Fast location search, precise geolocation, and unit controls that match how you think.</p>
           <div class="landing-pills">
             <span>⚡ Fast search</span>
             <span>🎯 Precise geolocation</span>
             <span>🧭 Keyboard-friendly suggestions</span>
             <span>📈 Hourly + weekly context</span>
+            <span>🌫️ Air quality</span>
+            <span>🚨 Smart weather alerts</span>
           </div>
         </div>
 
@@ -93,9 +89,23 @@
             <div id="weatherIcon" class="weather-icon" aria-hidden="true"></div>
             <div id="temp"></div>
           </div>
+          <div class="action-row">
+            <button id="saveFavorite" class="ghost-btn" type="button">⭐ Save favorite</button>
+          </div>
           <div id="details"></div>
         </div>
         <div class="metrics-grid" id="metrics"></div>
+      </section>
+
+      <section class="split-grid">
+        <article>
+          <h3>Air Quality</h3>
+          <div id="airQuality" class="air-quality"></div>
+        </article>
+        <article>
+          <h3>Smart Alerts</h3>
+          <div id="alerts" class="alerts"></div>
+        </article>
       </section>
 
       <section>

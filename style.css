@@ -391,3 +391,65 @@ section {
     height: 42px;
   }
 }
+
+.favorite-list {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.favorite-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(250, 204, 21, 0.45);
+  background: rgba(161, 98, 7, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.favorite-open,
+.favorite-remove {
+  border: none;
+  background: transparent;
+  color: #fde68a;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+
+.favorite-remove {
+  border-left: 1px solid rgba(250, 204, 21, 0.35);
+}
+
+.action-row {
+  margin-top: 8px;
+}
+
+.split-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.air-quality,
+.alerts {
+  min-height: 120px;
+  color: #cbd5e1;
+}
+
+.aqi-main {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.alerts p {
+  margin: 8px 0;
+}
+
+@media (max-width: 950px) {
+  .split-grid {
+    grid-template-columns: 1fr;
+  }
+}

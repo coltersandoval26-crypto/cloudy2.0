@@ -9,3 +9,14 @@ export async function fetchWeather(lat, lon) {
 
   return res.json();
 }
+
+export async function fetchAirQuality(lat, lon) {
+  const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5,pm10,ozone&timezone=auto`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    throw new Error(`Air quality request failed with ${res.status}`);
+  }
+
+  return res.json();
+}

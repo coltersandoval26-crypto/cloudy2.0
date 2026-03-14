@@ -1,11 +1,18 @@
-import { fetchWeather } from "./weather.js";
+import { fetchWeather, fetchAirQuality } from "./weather.js";
 import { searchCity, reverseGeocode } from "./search.js";
 import { drawHourlyChart } from "./charts.js";
 import { createRadar } from "./radar.js";
-import { saveRecent, getRecent } from "./storage.js";
+import {
+  saveRecent,
+  getRecent,
+  getFavorites,
+  saveFavorite,
+  removeFavorite,
+} from "./storage.js";
 
 const input = document.getElementById("search");
 const locateBtn = document.getElementById("locate");
+const saveFavoriteBtn = document.getElementById("saveFavorite");
 const suggestions = document.getElementById("suggestions");
 const statusEl = document.getElementById("status");
 const cityEl = document.getElementById("city");
@@ -14,9 +21,12 @@ const weatherIconEl = document.getElementById("weatherIcon");
 const tempEl = document.getElementById("temp");
 const detailsEl = document.getElementById("details");
 const metricsEl = document.getElementById("metrics");
+const airQualityEl = document.getElementById("airQuality");
+const alertsEl = document.getElementById("alerts");
 const hourlyCardsEl = document.getElementById("hourlyCards");
 const dailyEl = document.getElementById("daily");
 const recentEl = document.getElementById("recent");
+const favoritesEl = document.getElementById("favorites");
 const tempUnitEl = document.getElementById("unit-temp");
 const speedUnitEl = document.getElementById("unit-speed");
 const rainUnitEl = document.getElementById("unit-rain");
@@ -126,6 +136,15 @@ const setStatus = (message = "") => {
 
 const getLocationName = (item) => [item.name, item.admin1, item.country].filter(Boolean).join(", ");
 
+const aqiCategory = (aqi = 0) => {
+  if (aqi <= 50) return "Good";
+  if (aqi <= 100) return "Moderate";
+  if (aqi <= 150) return "Unhealthy for sensitive groups";
+  if (aqi <= 200) return "Unhealthy";
+  if (aqi <= 300) return "Very Unhealthy";
+  return "Hazardous";
+};
+
 const selectSuggestion = (index) => {
   if (!latestResults[index]) return;
   const city = latestResults[index];
@@ -138,9 +157,7 @@ const selectSuggestion = (index) => {
 
 const highlightSuggestion = () => {
   const items = suggestions.querySelectorAll(".suggestion");
-  items.forEach((item, index) => {
-    item.classList.toggle("is-active", index === highlightedSuggestion);
-  });
+  items.forEach((item, index) => item.classList.toggle("is-active", index === highlightedSuggestion));
 };
 
 const renderSuggestions = (results) => {
@@ -156,10 +173,7 @@ const renderSuggestions = (results) => {
     const precision = `${Number(result.latitude).toFixed(4)}, ${Number(result.longitude).toFixed(4)}`;
 
     button.innerHTML = `<strong>${locationName}</strong><br /><small>Precision: ${precision}</small>`;
-
-    button.addEventListener("click", () => {
-      selectSuggestion(index);
-    });
+    button.addEventListener("click", () => selectSuggestion(index));
 
     suggestions.appendChild(button);
   });
@@ -257,6 +271,39 @@ const renderMetrics = (data) => {
     .join("");
 };
 
+const renderAirQuality = (aq) => {
+  if (!aq?.current) {
+    airQualityEl.innerHTML = `<p>Air quality unavailable.</p>`;
+    return;
+  }
+
+  const { us_aqi: aqi, pm2_5: pm25, pm10, ozone } = aq.current;
+  airQualityEl.innerHTML = `
+    <div class="aqi-main">AQI ${Math.round(aqi ?? 0)} · ${aqiCategory(aqi)}</div>
+    <p>PM2.5: ${Number(pm25 ?? 0).toFixed(1)} µg/m³</p>
+    <p>PM10: ${Number(pm10 ?? 0).toFixed(1)} µg/m³</p>
+    <p>Ozone: ${Number(ozone ?? 0).toFixed(1)} µg/m³</p>
+  `;
+};
+
+const renderAlerts = (data, aq) => {
+  const current = data.current || {};
+  const pops = data.hourly.precipitation_probability || [];
+  const nextRain = Math.max(...pops.slice(0, 12), 0);
+  const alerts = [];
+
+  if ((current.uv_index ?? 0) >= 7) alerts.push("High UV expected. Consider sun protection.");
+  if ((current.wind_speed_10m ?? 0) >= 45) alerts.push("Strong winds possible. Secure outdoor items.");
+  if (nextRain >= 75) alerts.push("High rain probability in the next 12 hours.");
+  if ((current.temperature_2m ?? 0) >= 35) alerts.push("Heat risk: very warm conditions today.");
+  if ((current.temperature_2m ?? 0) <= -5) alerts.push("Freeze risk: very cold conditions today.");
+  if ((aq?.current?.us_aqi ?? 0) >= 100) alerts.push("Air quality may be unhealthy for sensitive groups.");
+
+  alertsEl.innerHTML = alerts.length
+    ? alerts.map((message) => `<p>• ${message}</p>`).join("")
+    : `<p>No major alerts right now.</p>`;
+};
+
 const renderRecent = async () => {
   const recent = getRecent();
   recentEl.innerHTML = "";
@@ -280,6 +327,28 @@ const renderRecent = async () => {
   });
 };
 
+const renderFavorites = () => {
+  const favorites = getFavorites();
+  favoritesEl.innerHTML = "";
+
+  favorites.forEach((favorite) => {
+    const wrap = document.createElement("div");
+    wrap.className = "favorite-chip";
+    wrap.innerHTML = `<button type="button" class="favorite-open">${favorite.name}</button><button type="button" class="favorite-remove" aria-label="remove favorite">✕</button>`;
+
+    wrap.querySelector(".favorite-open").addEventListener("click", () => {
+      loadLocation(favorite.lat, favorite.lon, favorite.name);
+    });
+
+    wrap.querySelector(".favorite-remove").addEventListener("click", () => {
+      removeFavorite(favorite.name);
+      renderFavorites();
+    });
+
+    favoritesEl.appendChild(wrap);
+  });
+};
+
 const runSearch = debounce(async () => {
   const query = input.value.trim();
   if (!query) {
@@ -300,7 +369,7 @@ const runSearch = debounce(async () => {
 
 const rerenderCurrent = () => {
   if (!currentContext) return;
-  const { data } = currentContext;
+  const { data, airQuality } = currentContext;
   const current = data.current || {};
   const temperature = current.temperature_2m ?? data.current_weather?.temperature;
   const windSpeed = current.wind_speed_10m ?? data.current_weather?.windspeed;
@@ -317,6 +386,8 @@ const rerenderCurrent = () => {
   renderHourlyCards(data);
   renderDaily(data);
   renderMetrics(data);
+  renderAirQuality(airQuality);
+  renderAlerts(data, airQuality);
 };
 
 async function loadLocation(lat, lon, name) {
@@ -328,10 +399,13 @@ async function loadLocation(lat, lon, name) {
     detailsEl.textContent = "";
     setStatus("Updating forecast...");
 
-    const data = await fetchWeather(lat, lon);
+    const [data, airQuality] = await Promise.all([
+      fetchWeather(lat, lon),
+      fetchAirQuality(lat, lon).catch(() => null),
+    ]);
     const current = data.current || {};
 
-    currentContext = { lat, lon, name, data };
+    currentContext = { lat, lon, name, data, airQuality };
 
     tempEl.textContent = formatTemp(current.temperature_2m ?? data.current_weather.temperature);
     conditionEl.textContent = weatherCodes[current.weather_code] || "Current conditions";
@@ -347,6 +421,8 @@ async function loadLocation(lat, lon, name) {
     renderHourlyCards(data);
     renderDaily(data);
     renderMetrics(data);
+    renderAirQuality(airQuality);
+    renderAlerts(data, airQuality);
     createRadar(lat, lon);
 
     saveRecent(name);
@@ -429,6 +505,17 @@ locateBtn.addEventListener("click", () => {
   );
 });
 
+saveFavoriteBtn.addEventListener("click", () => {
+  if (!currentContext) return;
+  saveFavorite({
+    name: currentContext.name,
+    lat: currentContext.lat,
+    lon: currentContext.lon,
+  });
+  renderFavorites();
+  setStatus("Added to favorites.");
+});
+
 [tempUnitEl, speedUnitEl, rainUnitEl].forEach((el) => {
   el.addEventListener("change", () => {
     preferences.temp = tempUnitEl.value;
@@ -448,4 +535,5 @@ speedUnitEl.value = preferences.speed;
 rainUnitEl.value = preferences.rain;
 
 renderRecent();
+renderFavorites();
 loadLocation(40.7128, -74.006, "New York, New York, United States");
