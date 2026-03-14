@@ -1,48 +1,122 @@
-body{
-
-background:#0f1724;
-color:white;
-font-family:system-ui;
-margin:0;
-
+:root {
+  color-scheme: dark;
 }
 
-header{
-
-text-align:center;
-padding:30px;
-
+body {
+  background: linear-gradient(180deg, #0f172a, #111827);
+  color: #e2e8f0;
+  font-family: Inter, system-ui, sans-serif;
+  margin: 0;
 }
 
-.search-wrap{
-
-position:relative;
-max-width:500px;
-margin:auto;
-
+header {
+  text-align: center;
+  padding: 24px;
 }
 
-.search-input{
-
-width:100%;
-padding:14px;
-border-radius:14px;
-border:none;
-
+main {
+  width: min(960px, 92vw);
+  margin: 0 auto 36px;
+  display: grid;
+  gap: 16px;
 }
 
-.suggestions{
-
-position:absolute;
-top:100%;
-left:0;
-right:0;
-background:#111;
-
+section {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 16px;
+  padding: 16px;
 }
 
-#radar{
+#city {
+  margin: 0 0 6px;
+}
 
-height:400px;
+#temp {
+  font-size: 2.2rem;
+  font-weight: 700;
+}
 
+#details {
+  color: #94a3b8;
+}
+
+.search-wrap {
+  position: relative;
+  max-width: 500px;
+  margin: auto;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #0b1220;
+  color: #e2e8f0;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #111827;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.suggestion {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.recent-list {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.recent-chip {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.daily-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.day-card {
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.day-card h4,
+.day-card p {
+  margin: 4px 0;
+}
+
+#radar {
+  height: 400px;
+  border-radius: 10px;
+  overflow: hidden;
 }
