@@ -1,87 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<head>
+    <title>Weather</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="style.css" />
 
-<title>Weather</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
 
-<link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<link
-rel="stylesheet"
-href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
 
-<script
-src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-</script>
+  <body>
+    <header>
+      <h1 class="logo">Weather</h1>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+      <div class="search-wrap">
+        <input id="search" class="search-input" placeholder="Search city" />
 
-</head>
+        <div id="suggestions" class="suggestions"></div>
+      </div>
 
-<body>
+      <div id="recent" class="recent-list"></div>
+    </header>
 
-<header>
+    <main>
+      <section id="current">
+        <h2 id="city"></h2>
 
-<h1 class="logo">Weather</h1>
+        <div id="temp"></div>
 
-<div class="search-wrap">
+        <div id="details"></div>
+      </section>
 
-<input
-id="search"
-class="search-input"
-placeholder="Search city"
-/>
+      <section>
+        <h3>Hourly Forecast</h3>
 
-<div id="suggestions" class="suggestions"></div>
+        <canvas id="hourlyChart"></canvas>
+      </section>
 
-</div>
+      <section>
+        <h3>7 Day Forecast</h3>
 
-</header>
+        <div id="daily" class="daily-grid"></div>
+      </section>
 
-<main>
+      <section>
+        <h3>Radar</h3>
 
-<section id="current">
+        <div id="radar"></div>
+      </section>
+    </main>
 
-<h2 id="city"></h2>
-
-<div id="temp"></div>
-
-<div id="details"></div>
-
-</section>
-
-<section>
-
-<h3>Hourly Forecast</h3>
-
-<canvas id="hourlyChart"></canvas>
-
-</section>
-
-<section>
-
-<h3>7 Day Forecast</h3>
-
-<div id="daily"></div>
-
-</section>
-
-<section>
-
-<h3>Radar</h3>
-
-<div id="radar"></div>
-
-</section>
-
-</main>
-
-<script type="module" src="app.js"></script>
-
-</body>
+    <script type="module" src="app.js"></script>
+  </body>
 </html>

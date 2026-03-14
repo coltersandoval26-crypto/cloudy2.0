@@ -1,17 +1,15 @@
-export function saveRecent(city){
+const RECENT_KEY = "recent";
 
-let list =
-JSON.parse(localStorage.getItem("recent") || "[]");
-
-if(!list.includes(city)){
-
-list.unshift(city);
-
-list = list.slice(0,5);
-
-localStorage.setItem("recent",
-JSON.stringify(list));
-
+export function getRecent() {
+  return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
 }
 
+export function saveRecent(city) {
+  let list = getRecent();
+
+  if (!list.includes(city)) {
+    list.unshift(city);
+    list = list.slice(0, 5);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+  }
 }

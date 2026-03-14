@@ -1,17 +1,24 @@
-export function createRadar(lat, lon){
+let map;
+let radarLayer;
 
-const map =
-L.map("radar").setView([lat,lon],7);
+export function createRadar(lat, lon) {
+  if (!map) {
+    map = L.map("radar").setView([lat, lon], 7);
 
-L.tileLayer(
-"https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+  } else {
+    map.setView([lat, lon], 7);
+  }
 
-const radar =
-L.tileLayer(
-"https://tilecache.rainviewer.com/v2/radar/latest/256/{z}/{x}/{y}/2/1_1.png"
-);
+  if (radarLayer) {
+    map.removeLayer(radarLayer);
+  }
 
-radar.addTo(map);
+  radarLayer = L.tileLayer(
+    "https://tilecache.rainviewer.com/v2/radar/latest/256/{z}/{x}/{y}/2/1_1.png"
+  );
 
+  radarLayer.addTo(map);
 }
