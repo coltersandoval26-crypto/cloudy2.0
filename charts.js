@@ -21,6 +21,16 @@ export function drawHourlyChart(data) {
           backgroundColor: "rgba(76, 201, 240, 0.2)",
           fill: true,
           tension: 0.3,
+          yAxisID: "y",
+        },
+        {
+          label: "Rain Chance (%)",
+          data: data.hourly.precipitation_probability.slice(0, 24),
+          borderColor: "#a78bfa",
+          backgroundColor: "rgba(167, 139, 250, 0.15)",
+          borderDash: [4, 4],
+          tension: 0.25,
+          yAxisID: "y1",
         },
       ],
     },
@@ -48,6 +58,17 @@ export function drawHourlyChart(data) {
           },
           grid: {
             color: "rgba(148, 163, 184, 0.15)",
+          },
+        },
+        y1: {
+          position: "right",
+          min: 0,
+          max: 100,
+          ticks: {
+            color: "#94a3b8",
+          },
+          grid: {
+            drawOnChartArea: false,
           },
         },
       },

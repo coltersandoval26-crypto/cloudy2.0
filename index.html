@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    <title>Weather</title>
+    <title>Cloudy • Weather</title>
 
     <link rel="stylesheet" href="style.css" />
 
@@ -20,11 +20,11 @@
 
   <body>
     <header>
-      <h1 class="logo">Weather</h1>
+      <h1 class="logo">Cloudy</h1>
+      <p class="tagline">Fast, clean weather at a glance.</p>
 
       <div class="search-wrap">
         <input id="search" class="search-input" placeholder="Search city" />
-
         <div id="suggestions" class="suggestions"></div>
       </div>
 
@@ -32,29 +32,28 @@
     </header>
 
     <main>
-      <section id="current">
-        <h2 id="city"></h2>
-
-        <div id="temp"></div>
-
-        <div id="details"></div>
+      <section id="current" class="hero">
+        <div>
+          <h2 id="city"></h2>
+          <div id="condition" class="condition"></div>
+          <div id="temp"></div>
+          <div id="details"></div>
+        </div>
+        <div class="metrics-grid" id="metrics"></div>
       </section>
 
       <section>
         <h3>Hourly Forecast</h3>
-
         <canvas id="hourlyChart"></canvas>
       </section>
 
       <section>
         <h3>7 Day Forecast</h3>
-
         <div id="daily" class="daily-grid"></div>
       </section>
 
       <section>
         <h3>Radar</h3>
-
         <div id="radar"></div>
       </section>
     </main>
