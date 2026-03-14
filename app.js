@@ -13,6 +13,7 @@ import {
 const input = document.getElementById("search");
 const locateBtn = document.getElementById("locate");
 const saveFavoriteBtn = document.getElementById("saveFavorite");
+const shareLocationBtn = document.getElementById("shareLocation");
 const suggestions = document.getElementById("suggestions");
 const statusEl = document.getElementById("status");
 const cityEl = document.getElementById("city");
@@ -23,6 +24,7 @@ const detailsEl = document.getElementById("details");
 const metricsEl = document.getElementById("metrics");
 const airQualityEl = document.getElementById("airQuality");
 const alertsEl = document.getElementById("alerts");
+const sunProgressEl = document.getElementById("sunProgress");
 const hourlyCardsEl = document.getElementById("hourlyCards");
 const dailyEl = document.getElementById("daily");
 const recentEl = document.getElementById("recent");
@@ -36,6 +38,11 @@ const preferences = {
   speed: localStorage.getItem("pref-speed") || "km",
   rain: localStorage.getItem("pref-rain") || "cm",
 };
+
+const queryParams = new URLSearchParams(window.location.search);
+if (["c", "f"].includes(queryParams.get("temp"))) preferences.temp = queryParams.get("temp");
+if (["km", "mi"].includes(queryParams.get("speed"))) preferences.speed = queryParams.get("speed");
+if (["cm", "in"].includes(queryParams.get("rain"))) preferences.rain = queryParams.get("rain");
 
 let latestResults = [];
 let highlightedSuggestion = -1;
@@ -143,6 +150,22 @@ const aqiCategory = (aqi = 0) => {
   if (aqi <= 200) return "Unhealthy";
   if (aqi <= 300) return "Very Unhealthy";
   return "Hazardous";
+};
+
+const updateShareUrl = () => {
+  if (!currentContext) return window.location.href;
+
+  const params = new URLSearchParams(window.location.search);
+  params.set("lat", String(currentContext.lat));
+  params.set("lon", String(currentContext.lon));
+  params.set("name", currentContext.name);
+  params.set("temp", preferences.temp);
+  params.set("speed", preferences.speed);
+  params.set("rain", preferences.rain);
+
+  const url = `${window.location.pathname}?${params.toString()}`;
+  window.history.replaceState(null, "", url);
+  return window.location.href;
 };
 
 const selectSuggestion = (index) => {
@@ -304,6 +327,30 @@ const renderAlerts = (data, aq) => {
     : `<p>No major alerts right now.</p>`;
 };
 
+const renderSunProgress = (data) => {
+  const sunriseIso = data.daily?.sunrise?.[0];
+  const sunsetIso = data.daily?.sunset?.[0];
+  const nowIso = data.current?.time;
+
+  if (!sunriseIso || !sunsetIso || !nowIso) {
+    sunProgressEl.innerHTML = `<p>Sun progress unavailable.</p>`;
+    return;
+  }
+
+  const sunrise = new Date(sunriseIso).getTime();
+  const sunset = new Date(sunsetIso).getTime();
+  const now = new Date(nowIso).getTime();
+  const raw = ((now - sunrise) / (sunset - sunrise)) * 100;
+  const pct = Math.max(0, Math.min(100, raw));
+
+  sunProgressEl.innerHTML = `
+    <p>Sunrise: ${new Date(sunriseIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+    <div class="sun-track"><div class="sun-fill" style="width:${pct}%"></div></div>
+    <p>Sunset: ${new Date(sunsetIso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+    <p>Daylight progress: ${Math.round(pct)}%</p>
+  `;
+};
+
 const renderRecent = async () => {
   const recent = getRecent();
   recentEl.innerHTML = "";
@@ -388,6 +435,8 @@ const rerenderCurrent = () => {
   renderMetrics(data);
   renderAirQuality(airQuality);
   renderAlerts(data, airQuality);
+  renderSunProgress(data);
+  updateShareUrl();
 };
 
 async function loadLocation(lat, lon, name) {
@@ -423,7 +472,9 @@ async function loadLocation(lat, lon, name) {
     renderMetrics(data);
     renderAirQuality(airQuality);
     renderAlerts(data, airQuality);
+    renderSunProgress(data);
     createRadar(lat, lon);
+    updateShareUrl();
 
     saveRecent(name);
     renderRecent();
@@ -516,6 +567,16 @@ saveFavoriteBtn.addEventListener("click", () => {
   setStatus("Added to favorites.");
 });
 
+shareLocationBtn.addEventListener("click", async () => {
+  const url = updateShareUrl();
+  try {
+    await navigator.clipboard.writeText(url);
+    setStatus("Share link copied to clipboard.");
+  } catch {
+    setStatus(`Share this URL: ${url}`);
+  }
+});
+
 [tempUnitEl, speedUnitEl, rainUnitEl].forEach((el) => {
   el.addEventListener("change", () => {
     preferences.temp = tempUnitEl.value;
@@ -536,4 +597,13 @@ rainUnitEl.value = preferences.rain;
 
 renderRecent();
 renderFavorites();
-loadLocation(40.7128, -74.006, "New York, New York, United States");
+
+const initialLat = Number(queryParams.get("lat"));
+const initialLon = Number(queryParams.get("lon"));
+const initialName = queryParams.get("name");
+
+if (!Number.isNaN(initialLat) && !Number.isNaN(initialLon)) {
+  loadLocation(initialLat, initialLon, initialName || "Shared Location");
+} else {
+  loadLocation(40.7128, -74.006, "New York, New York, United States");
+}
